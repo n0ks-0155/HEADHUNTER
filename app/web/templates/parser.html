@@ -1,0 +1,379 @@
+<!-- app/web/templates/parser.html -->
+{% extends "base.html" %}
+
+{% block title %}Парсер - Мониторинг вакансий{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="fas fa-download"></i> Парсер вакансий HeadHunter</h1>
+        <p class="lead">Обновление базы данных актуальными вакансиями</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-cogs"></i> Запуск парсера</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Парсер собирает вакансии с сайта HeadHunter по бизнес-ролям колледжа.
+                    Поиск ведется для региона Владивосток (ID: 22).
+                </div>
+                
+                <div class="mb-4">
+                    <h6><i class="fas fa-list"></i> Бизнес-роли для поиска:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul>
+                                <li>Data Analyst (аналитик данных)</li>
+                                <li>Frontend Developer</li>
+                                <li>Backend Developer</li>
+                                <li>Fullstack Developer</li>
+                                <li>DevOps Engineer</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul>
+                                <li>QA Engineer</li>
+                                <li>Project Manager</li>
+                                <li>UX/UI Designer</li>
+                                <li>Data Scientist</li>
+                                <li>System Administrator</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6><i class="fas fa-sliders-h"></i> Настройки парсера:</h6>
+                    <form id="parserSettings">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Регион</label>
+                                <select class="form-select" id="regionSelect">
+                                    <option value="22" selected>Владивосток</option>
+                                    <option value="1">Москва</option>
+                                    <option value="2">Санкт-Петербург</option>
+                                    <option value="76">Новосибирск</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Количество вакансий на роль</label>
+                                <select class="form-select" id="limitSelect">
+                                    <option value="10" selected>10 (быстро)</option>
+                                    <option value="20">20 (стандартно)</option>
+                                    <option value="50">50 (полно)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success btn-lg" id="startParser">
+                        <i class="fas fa-play"></i> Запустить парсер
+                    </button>
+                    <button class="btn btn-outline-secondary btn-lg" id="testParser">
+                        <i class="fas fa-vial"></i> Тестовый запуск (без сохранения)
+                    </button>
+                </div>
+                
+                <div class="mt-4">
+                    <div id="parserProgress" style="display: none;">
+                        <h6><i class="fas fa-spinner fa-spin"></i> Выполнение парсера:</h6>
+                        <div class="progress mb-3">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 id="progressBar" style="width: 0%"></div>
+                        </div>
+                        <div class="alert alert-info" id="progressText">
+                            Инициализация...
+                        </div>
+                    </div>
+                    
+                    <div id="parserResults" style="display: none;">
+                        <h6><i class="fas fa-check-circle text-success"></i> Результаты:</h6>
+                        <div class="alert alert-success" id="resultsText"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-history"></i> История запусков</h5>
+            </div>
+            <div class="card-body">
+                <p id="lastRunInfo">Загрузка информации...</p>
+                <div class="table-responsive">
+                    <table class="table table-sm" id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Вакансий</th>
+                                <th>Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- История будет загружена через AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Важная информация</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-clock text-warning"></i>
+                        <strong>Время выполнения:</strong> 1-5 минут
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-database text-primary"></i>
+                        <strong>Дубликаты:</strong> Автоматически пропускаются
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-shield-alt text-success"></i>
+                        <strong>API HeadHunter:</strong> Соблюдаются лимиты запросов
+                    </li>
+                    <li>
+                        <i class="fas fa-sync text-info"></i>
+                        <strong>Рекомендуется:</strong> Обновлять раз в 1-3 дня
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Информация о статусе базы -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-database"></i> Текущее состояние базы данных</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <h2 id="currentVacancies">0</h2>
+                        <p class="text-muted">Вакансий</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h2 id="currentCompanies">0</h2>
+                        <p class="text-muted">Компаний</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h2 id="lastUpdate">-</h2>
+                        <p class="text-muted">Последнее обновление</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для результатов тестового парсера -->
+<div class="modal fade" id="testParserModal" tabindex="-1" aria-labelledby="testParserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="testParserModalLabel">
+                    <i class="fas fa-flask"></i> Результаты тестового запуска
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="testParserResults">
+                    <!-- Здесь будет таблица с результатами -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Загрузка текущей статистики
+    function loadCurrentStats() {
+        $.get('/api/statistics', function(data) {
+            if (data && !data.error) {
+                $('#currentVacancies').text(data.total_vacancies || 0);
+                $('#currentCompanies').text(data.total_companies || 0);
+                
+                // Получаем количество студентов отдельно
+                $.get('/api/student_count', function(studentData) {
+                    if (studentData && !studentData.error) {
+                        $('#currentStudents').text(studentData.count || 0);
+                    }
+                });
+                
+                // Формируем текст о последнем запуске
+                let lastRunText = 'Неизвестно';
+                if (data.last_parsed) {
+                    lastRunText = new Date(data.last_parsed).toLocaleString('ru-RU');
+                } else if (data.total_vacancies > 0) {
+                    lastRunText = 'Есть данные';
+                }
+                $('#lastUpdate').text(lastRunText);
+            }
+        });
+    }
+    
+    // Загрузка истории запусков
+    function loadHistory() {
+        $.get('/api/parser_history', function(data) {
+            if (data && !data.error) {
+                let tbody = '';
+                if (data.history && data.history.length > 0) {
+                    data.history.forEach(function(run) {
+                        tbody += `
+                            <tr>
+                                <td>${new Date(run.timestamp).toLocaleString('ru-RU')}</td>
+                                <td>${run.vacancies_added || 0}</td>
+                                <td>
+                                    <span class="badge ${run.success ? 'bg-success' : 'bg-danger'}">
+                                        ${run.success ? 'Успешно' : 'Ошибка'}
+                                    </span>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody = '<tr><td colspan="3" class="text-center">Нет данных о запусках</td></tr>';
+                }
+                $('#historyTable tbody').html(tbody);
+            }
+        });
+    }
+    
+    // Запуск парсера (с сохранением)
+    $('#startParser').click(function() {
+        if (!confirm('Запустить парсер? Это может занять несколько минут.')) {
+            return;
+        }
+        
+        showLoading();
+        $('#parserProgress').show();
+        $('#parserResults').hide();
+        
+        const region = $('#regionSelect').val();
+        const limit = $('#limitSelect').val();
+        
+        $.ajax({
+            url: '/api/run_parser',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                region: region,
+                limit: limit
+            }),
+            success: function(data) {
+                hideLoading();
+                $('#parserProgress').hide();
+                $('#parserResults').show();
+                
+                if (data.success) {
+                    $('#resultsText').html(`
+                        <h5><i class="fas fa-check-circle text-success"></i> Парсер успешно выполнен!</h5>
+                        <p>${data.message}</p>
+                        <p><strong>Всего вакансий в базе:</strong> ${data.stats.total_vacancies || 0}</p>
+                        <p><strong>Всего компаний:</strong> ${data.stats.total_companies || 0}</p>
+                        <p><strong>Вакансий с зарплатой:</strong> ${data.stats.total_with_salary || 0}</p>
+                        <p><strong>Средняя зарплата:</strong> ${data.stats.average_salary ? data.stats.average_salary + ' руб.' : 'нет данных'}</p>
+                    `);
+                    
+                    // Обновляем статистику
+                    loadCurrentStats();
+                    loadHistory();
+                } else {
+                    $('#resultsText').html(`
+                        <h5><i class="fas fa-times-circle text-danger"></i> Ошибка при выполнении парсера!</h5>
+                        <p>${data.error || 'Неизвестная ошибка'}</p>
+                    `);
+                }
+            },
+            error: function(xhr, status, error) {
+                hideLoading();
+                $('#parserProgress').hide();
+                $('#parserResults').show();
+                $('#resultsText').html(`
+                    <h5><i class="fas fa-times-circle text-danger"></i> Ошибка сервера!</h5>
+                    <p>${error || 'Неизвестная ошибка'}</p>
+                    <p>Проверьте соединение с базой данных и API HeadHunter</p>
+                `);
+            }
+        });
+    });
+    
+    // Тестовый запуск парсера (без сохранения)
+    $('#testParser').click(function() {
+        if (!confirm('Запустить тестовый парсер? Данные НЕ будут сохранены в базу.')) {
+            return;
+        }
+
+        showLoading();
+        $('#parserProgress').hide();
+        $('#parserResults').hide();
+
+        $.ajax({
+            url: '/api/test_parser',
+            type: 'POST',
+            contentType: 'application/json',
+            success: function(data) {
+                hideLoading();
+                if (data.success) {
+                    let html = `<p class="lead">Найдено вакансий: <strong>${data.total_found}</strong></p>`;
+                    html += '<table class="table table-hover table-sm">';
+                    html += '<thead><tr><th>Бизнес-роль</th><th>Количество</th><th>Примеры вакансий</th></tr></thead><tbody>';
+
+                    for (let role in data.stats) {
+                        let roleStats = data.stats[role];
+                        let examples = roleStats.examples.length ? roleStats.examples.join('<br>') : '<span class="text-muted">нет</span>';
+                        html += `<tr>
+                            <td><strong>${role}</strong></td>
+                            <td class="text-center"><span class="badge bg-primary">${roleStats.count}</span></td>
+                            <td><small>${examples}</small></td>
+                        </tr>`;
+                    }
+
+                    html += '</tbody></table>';
+                    $('#testParserResults').html(html);
+                } else {
+                    $('#testParserResults').html(`<div class="alert alert-danger">${data.error || 'Неизвестная ошибка'}</div>`);
+                }
+
+                // Показываем модальное окно
+                let modal = new bootstrap.Modal(document.getElementById('testParserModal'));
+                modal.show();
+            },
+            error: function(xhr, status, error) {
+                hideLoading();
+                $('#testParserResults').html(`<div class="alert alert-danger">Ошибка сервера: ${error}</div>`);
+                let modal = new bootstrap.Modal(document.getElementById('testParserModal'));
+                modal.show();
+            }
+        });
+    });
+    
+    // Инициализация
+    loadCurrentStats();
+    loadHistory();
+});
+</script>
+{% endblock %}
