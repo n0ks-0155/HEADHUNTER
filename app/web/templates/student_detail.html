@@ -1,0 +1,293 @@
+<!-- app/web/templates/student_detail.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ student.name }} - Рекомендации{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('students') }}">Студенты</a></li>
+                <li class="breadcrumb-item active">{{ student.name }}</li>
+            </ol>
+        </nav>
+        
+        <h1>
+            <i class="fas fa-user-graduate"></i> {{ student.name }}
+            <small class="text-muted">Рекомендации вакансий</small>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Информация о студенте -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-id-card"></i> Профиль студента</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Email:</strong> {{ student.email }}</p>
+                <p>
+                    <strong>Бизнес-роль:</strong>
+                    {% if student.business_role %}
+                        <span class="badge bg-info">{{ student.business_role.name }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Не указана</span>
+                    {% endif %}
+                </p>
+                <p><strong>Дата регистрации:</strong> {{ student.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                
+                <hr>
+                
+                <h6><i class="fas fa-tools"></i> Навыки студента</h6>
+                {% if student.skills %}
+                    <div class="mb-3">
+                        {% for skill in student.skills %}
+                            <span class="badge bg-primary skill-badge" 
+                                  title="Уровень: {{ skill.proficiency_level }}/5">
+                                {{ skill.name }}
+                                <span class="badge bg-light text-dark">
+                                    {{ skill.proficiency_level }}/5
+                                </span>
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Навыки не указаны</p>
+                {% endif %}
+                
+                <a href="{{ url_for('add_student') }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-edit"></i> Редактировать профиль
+                </a>
+            </div>
+        </div>
+        
+        <!-- Статистика рекомендаций -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Статистика</h5>
+            </div>
+            <div class="card-body">
+                <p>Найдено рекомендаций: <strong>{{ recommendations|length }}</strong></p>
+                
+                {% if recommendations %}
+                    {% set avg_score = (recommendations|map(attribute='scores.final_score')|list|sum / recommendations|length)|round(3) %}
+                    {% set max_score = (recommendations|map(attribute='scores.final_score')|list|max)|round(3) %}
+                    {% set min_score = (recommendations|map(attribute='scores.final_score')|list|min)|round(3) %}
+                    
+                    <p>Средняя оценка: <strong>{{ avg_score }}</strong></p>
+                    <p>Лучшая оценка: <strong>{{ max_score }}</strong></p>
+                    <p>Худшая оценка: <strong>{{ min_score }}</strong></p>
+                    
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-success" style="width:  avg_score * 100 "></div>
+                    </div>
+                    <small class="text-muted">Качество рекомендаций</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Рекомендации -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-briefcase"></i> Рекомендованные вакансии
+                    <span class="badge bg-light text-success ms-2">{{ recommendations|length }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recommendations %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Вакансии отсортированы по релевантности (оценка от 0.0 до 1.0).
+                        Алгоритм учитывает навыки, опыт, бизнес-роль и другие факторы.
+                    </div>
+                    
+                    {% for rec in recommendations %}
+                    <div class="card vacancy-card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title">
+                                        {{ rec.title }}
+                                        <span class="recommendation-score 
+                                            {% if rec.scores.final_score > 0.7 %}text-success
+                                            {% elif rec.scores.final_score > 0.4 %}text-warning
+                                            {% else %}text-danger{% endif %}">
+                                            {{ "%.3f"|format(rec.scores.final_score) }}
+                                        </span>
+                                    </h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">
+                                        <i class="fas fa-building"></i> {{ rec.company_name }}
+                                        <span class="ms-3"><i class="fas fa-map-marker-alt"></i> {{ rec.region_name }}</span>
+                                        <span class="ms-3">
+                                            <i class="fas fa-user-tag"></i> 
+                                            <span class="badge bg-info">{{ rec.business_role_name }}</span>
+                                        </span>
+                                    </h6>
+                                </div>
+                                <div class="text-end">
+                                    {% if rec.salary_from or rec.salary_to %}
+                                        <span class="badge bg-success fs-6">
+                                            {% if rec.salary_from and rec.salary_to %}
+                                                {{ rec.salary_from|int }} - {{ rec.salary_to|int }} {{ rec.currency }}
+                                            {% elif rec.salary_from %}
+                                                от {{ rec.salary_from|int }} {{ rec.currency }}
+                                            {% elif rec.salary_to %}
+                                                до {{ rec.salary_to|int }} {{ rec.currency }}
+                                            {% endif %}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <p class="card-text">
+                                <small>
+                                    <i class="fas fa-clock"></i> Опыт: {{ rec.experience or 'Не указан' }} |
+                                    <i class="fas fa-calendar"></i> Опубликована: 
+                                    {% if rec.published_at %}
+                                        {{ rec.published_at.strftime('%d.%m.%Y') }}
+                                    {% else %}
+                                        Неизвестно
+                                    {% endif %}
+                                </small>
+                            </p>
+                            
+                            {% if rec.matched_skills %}
+                                <p class="card-text">
+                                    <strong><i class="fas fa-check-circle text-success"></i> Совпавшие навыки:</strong>
+                                    {% for skill in rec.matched_skills[:5] %}
+                                        <span class="badge bg-success skill-badge">{{ skill }}</span>
+                                    {% endfor %}
+                                    {% if rec.matched_skills|length > 5 %}
+                                        <span class="badge bg-secondary">+{{ rec.matched_skills|length - 5 }}</span>
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+                            
+                            <!-- Детали оценки -->
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <small class="text-muted">
+                                        <strong>Детали оценки:</strong>
+                                        Навыки: {{ "%.3f"|format(rec.scores.skill_score) }} |
+                                        Опыт: {{ "%.3f"|format(rec.scores.experience_score) }} |
+                                        Роль: {{ "%.3f"|format(rec.scores.role_score) }} |
+                                        Текст: {{ "%.3f"|format(rec.scores.text_similarity) }}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <a href="{{ rec.url }}" target="_blank" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-external-link-alt"></i> Открыть на HH.ru
+                                </a>
+                                <button class="btn btn-outline-info btn-sm ms-2" 
+                                        onclick="showVacancyDetails('{{ rec.vacancy_id }}')">
+                                    <i class="fas fa-info-circle"></i> Подробнее
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Навигация по страницам (заглушка) -->
+                    <nav aria-label="Навигация по рекомендациям">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">Предыдущая</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Следующая</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Для этого студента не найдено рекомендаций.
+                    </div>
+                    <p>Возможные причины:</p>
+                    <ul>
+                        <li>Нет вакансий в базе данных</li>
+                        <li>Нет совпадений по навыкам студента и требованиям вакансий</li>
+                        <li>Все потенциальные рекомендации имеют низкую оценку (меньше 0.3)</li>
+                    </ul>
+                    <a href="{{ url_for('parser_page') }}" class="btn btn-primary">
+                        <i class="fas fa-download"></i> Обновить вакансии
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showVacancyDetails(vacancyId) {
+    showLoading();
+    
+    $.get('/api/vacancy/' + vacancyId, function(data) {
+        hideLoading();
+        
+        if (data && !data.error) {
+            // Создаем модальное окно с деталями
+            let modalHtml = `
+                <div class="modal fade" id="vacancyModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">${data.title}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Компания:</strong> ${data.company_name}</p>
+                                <p><strong>Регион:</strong> ${data.region_name}</p>
+                                <p><strong>Бизнес-роль:</strong> ${data.business_role_name}</p>
+                                ${data.salary_from || data.salary_to ? 
+                                    `<p><strong>Зарплата:</strong> ${data.salary_from || '?'} - ${data.salary_to || '?'} ${data.currency || ''}</p>` : ''}
+                                <p><strong>Опыт:</strong> ${data.experience || 'Не указан'}</p>
+                                <hr>
+                                <p><strong>Описание:</strong></p>
+                                <div style="max-height: 300px; overflow-y: auto;">
+                                    ${data.description ? data.description.replace(/\n/g, '<br>') : 'Нет описания'}
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <a href="${data.url}" target="_blank" class="btn btn-primary">
+                                    <i class="fas fa-external-link-alt"></i> Открыть на HH.ru
+                                </a>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('body').append(modalHtml);
+            let modal = new bootstrap.Modal(document.getElementById('vacancyModal'));
+            modal.show();
+            
+            // Удаляем модальное окно после закрытия
+            $('#vacancyModal').on('hidden.bs.modal', function () {
+                $(this).remove();
+            });
+        } else {
+            alert('Не удалось загрузить информацию о вакансии');
+        }
+    }).fail(function() {
+        hideLoading();
+        alert('Ошибка при загрузке информации о вакансии');
+    });
+}
+</script>
+{% endblock %}
