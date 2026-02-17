@@ -1,6 +1,6 @@
 # ![Typing SVG](https://readme-typing-svg.herokuapp.com?color=%2336BCF7&lines=HEADHUNTER)
 Веб-приложение для сбора и анализа вакансий с HeadHunter.ru в разрезе бизнес-ролей колледжа. Система автоматически обновляет базу вакансий, строит рекомендации для студентов на основе их навыков и предоставляет удобный дашборд для мониторинга бизнес-ролей в базе.
-# [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/) [![Flask](https://img.shields.io/badge/flask-3.0-green.svg)](https://flask.palletsprojects.com/) [![PostgreSQL](https://img.shields.io/badge/postgresql-15+-blue.svg)](https://www.postgresql.org/) [![License](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
+# [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/) [![Flask](https://img.shields.io/badge/flask-3.0-green.svg)](https://flask.palletsprojects.com/) [![PostgreSQL](https://img.shields.io/badge/postgresql-15+-blue.svg)](https://www.postgresql.org/)
 # Структура проекта
 ```
 ZavalinRabota/
