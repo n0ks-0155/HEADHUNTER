@@ -1,0 +1,199 @@
+<!-- app/web/templates/base.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Мониторинг вакансий HeadHunter{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        .navbar {
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        .stat-card {
+            border-radius: 10px;
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            border-radius: 10px 10px 0 0 !important;
+        }
+        .vacancy-card {
+            border-left: 4px solid #0d6efd;
+            margin-bottom: 15px;
+        }
+        .recommendation-score {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .skill-badge {
+            margin: 2px;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.8);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .footer {
+            margin-top: 50px;
+            padding: 20px 0;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line me-2"></i>Мониторинг вакансий
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home"></i> Главная
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-dashboard"></i> Дашборд
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('students') }}">
+                            <i class="fas fa-users"></i> Студенты
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('vacancies') }}">
+                            <i class="fas fa-briefcase"></i> Вакансии
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('parser_page') }}">
+                            <i class="fas fa-download"></i> Парсер
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('add_student') }}">
+                            <i class="fas fa-user-plus"></i> Добавить студента
+                        </a>
+                    </li>
+                </ul>
+                <span class="navbar-text">
+                    <i class="fas fa-database"></i> База: {{ get_db_stats().total_vacancies|default(0) }} вакансий
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Загрузка -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="text-center">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Загрузка...</span>
+            </div>
+            <p class="mt-3">Загрузка...</p>
+        </div>
+    </div>
+
+    <!-- Контент -->
+    <div class="container">
+        <!-- Сообщения -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Футер -->
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-university"></i> IThub</h5>
+                    <p>Мониторинг вакансий HeadHunter для бизнес-ролей колледжа</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p></p>
+                    <p></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        // Функция для показа/скрытия загрузки
+        function showLoading() {
+            $('#loadingOverlay').fadeIn();
+        }
+        
+        function hideLoading() {
+            $('#loadingOverlay').fadeOut();
+        }
+        
+        // Управление сообщениями
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+        
+        // Получение статистики базы
+        function getDatabaseStats() {
+            $.get('/api/statistics', function(data) {
+                if (data && !data.error) {
+                    $('.navbar-text').html(
+                        `<i class="fas fa-database"></i> База: ${data.total_vacancies || 0} вакансий, ${data.total_companies || 0} компаний`
+                    );
+                }
+            });
+        }
+        
+        // Обновляем статистику каждые 30 секунд
+        setInterval(getDatabaseStats, 30000);
+        $(document).ready(getDatabaseStats);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
