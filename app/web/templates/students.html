@@ -1,0 +1,196 @@
+<!-- app/web/templates/students.html -->
+{% extends "base.html" %}
+
+{% block title %}Студенты - Мониторинг вакансий{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="fas fa-users"></i> Студенты</h1>
+        <p class="lead">Список студентов и их рекомендации</p>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle"></i> Ошибка при загрузке данных: {{ error }}
+</div>
+{% endif %}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-graduate"></i> Все студенты системы
+                    <span class="badge bg-light text-primary ms-2">{{ students|length }}</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if students %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Имя</th>
+                                    <th>Email</th>
+                                    <th>Бизнес-роль</th>
+                                    <th>Навыков</th>
+                                    <th>Дата регистрации</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td>{{ student.id }}</td>
+                                    <td>
+                                        <strong>{{ student.name }}</strong>
+                                    </td>
+                                    <td>{{ student.email }}</td>
+                                    <td>
+                                        {% if student.business_role %}
+                                            <span class="badge bg-info">{{ student.business_role }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Не указана</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ student.skills_count }}</span>
+                                    </td>
+                                    <td>{{ student.created_at.strftime('%d.%m.%Y') if student.created_at else '-' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('student_detail', student_id=student.id) }}" 
+                                           class="btn btn-sm btn-success">
+                                            <i class="fas fa-search"></i> Рекомендации
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> В системе нет студентов.
+                        <a href="{{ url_for('add_student') }}" class="alert-link">Добавить первого студента</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Блок добавления студента -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-user-plus"></i> Быстрое добавление студента</h5>
+            </div>
+            <div class="card-body">
+                <p>Для тестирования алгоритма рекомендаций добавьте студента с навыками.</p>
+                <a href="{{ url_for('add_student') }}" class="btn btn-success btn-lg">
+                    <i class="fas fa-user-plus"></i> Добавить нового студента
+                </a>
+                <a href="/api/test_data" class="btn btn-outline-primary btn-lg ms-2" id="addTestStudent">
+                    <i class="fas fa-magic"></i> Добавить тестового студента
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Блок с информацией -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-lightbulb"></i> Как работают рекомендации</h5>
+            </div>
+            <div class="card-body">
+                <p>Алгоритм рекомендаций учитывает:</p>
+                <ul>
+                    <li><strong>Навыки студента</strong> - совпадение с требованиями вакансии</li>
+                    <li><strong>Бизнес-роль</strong> - соответствие роли студента и вакансии</li>
+                    <li><strong>Требуемый опыт</strong> - уровень опыта для вакансии</li>
+                    <li><strong>Зарплата</strong> - наличие и уровень зарплаты</li>
+                    <li><strong>Текстовое сходство</strong> - семантическое совпадение описаний</li>
+                </ul>
+                <p>Каждая рекомендация имеет оценку от 0.0 до 1.0.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Статистика рекомендаций</h5>
+            </div>
+            <div class="card-body">
+                <p id="recommendationStats">Загрузка статистики...</p>
+                <div class="progress mb-2">
+                    <div class="progress-bar bg-success" id="avgScoreBar" style="width: 0%"></div>
+                </div>
+                <small class="text-muted" id="scoreLabel">Средняя оценка рекомендаций: 0.0</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Добавление тестового студента
+    $('#addTestStudent').click(function(e) {
+        e.preventDefault();
+        showLoading();
+        
+        $.ajax({
+            url: '/api/test_data',
+            type: 'POST',
+            success: function(data) {
+                hideLoading();
+                if (data.success) {
+                    alert('Тестовый студент добавлен! ID: ' + data.student_id);
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            },
+            error: function() {
+                hideLoading();
+                alert('Ошибка при добавлении тестового студента');
+            }
+        });
+    });
+    
+    // Загрузка статистики рекомендаций
+    function loadRecommendationStats() {
+        $.get('/api/recommendation_stats', function(data) {
+            if (data && !data.error) {
+                let html = '';
+                if (data.stats) {
+                    html = `
+                        <p><i class="fas fa-chart-line"></i> Всего рекомендаций выдано: <strong>${data.stats.total_recommendations || 0}</strong></p>
+                        <p><i class="fas fa-user-check"></i> Студентов с рекомендациями: <strong>${data.stats.students_with_recommendations || 0}</strong></p>
+                        <p><i class="fas fa-star"></i> Средняя оценка: <strong>${data.stats.avg_score ? data.stats.avg_score.toFixed(3) : '0.000'}</strong></p>
+                    `;
+                    
+                    // Обновляем прогресс-бар
+                    let avgScore = data.stats.avg_score || 0;
+                    let percent = avgScore * 100;
+                    $('#avgScoreBar').css('width', percent + '%');
+                    $('#scoreLabel').text('Средняя оценка рекомендаций: ' + avgScore.toFixed(3));
+                }
+                $('#recommendationStats').html(html);
+            }
+        });
+    }
+    
+    loadRecommendationStats();
+});
+</script>
+{% endblock %}
