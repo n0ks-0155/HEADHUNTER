@@ -37,3 +37,58 @@ ZavalinRabota/
 git clone https://github.com/yourusername/vacancy-monitoring.git
 cd vacancy-monitoring
 ```
+### 2. Создание виртуального окружения и установка зависимостей
+```bash
+python -m venv venv
+source venv/bin/activate  #Версия для Linux или macOS
+venv\Scripts\activate     #Windows
+pip install -r requirements.txt
+```
+### 3. Настройка переменных окружения
+По умолчанию используются учётные данные для тестовой базы, но лучше создать свою:
+```env
+DB_HOST=your_localhost
+DB_PORT=your_port
+DB_NAME=your_name
+DB_USER=your_user
+DB_PASSWORD=your_password
+```
+### 4. Инициализация базы данных
+Создайте схему и таблицы, выполнив скрипт:
+```
+python app/scripts/init_db.py
+```
+При необходимости можно наполнить БД шаблонными данными (бизнес-роли, навыки):
+```
+python app/scripts/insert_students.py
+```
+### 5. Запуск веб-приложения
+```
+python run_app.py
+```
+После чего приложение будет доступно по адресу: *http://localhost:5000*
+
+## Запуск парсера отдельно
+Если нужно обновить вакансии без веб-интерфейса:
+```
+python app/scripts/run_parser.py
+```
+Для тестового прогона (без записи в БД) можно использовать скрипт *test_parser.py*.
+
+## Рекомендательная система
+Алгоритм *recommendation.py* вычисляет оценку для каждой вакансии по формуле:
+```
+score = 0.4 * skill_match + 0.2 * experience_match + 0.2 * role_match + 0.1 * salary + 0.1 * text_similarity
+```
+Где: 
+- *skill_match* – совпадение навыков с учётом уровня владения.
+
+- *experience_match* – соответствие требуемого опыта.
+
+- *role_match* – близость бизнес-ролей.
+
+- *salary* – Указание зарплаты.
+
+- *text_similarity* – сходство TF‑IDF векторов навыков студента и описания вакансии.
+
+Рекомендации можно получить через API или на странице студента.
