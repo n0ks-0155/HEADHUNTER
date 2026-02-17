@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить студента - Мониторинг вакансий{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="fas fa-user-plus"></i> Добавить нового студента</h1>
+        <p class="lead">Создание профиля студента для тестирования рекомендаций</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-user-edit"></i> Форма добавления студента</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('add_student') }}">
+                    <!-- Основная информация -->
+                    <div class="mb-4">
+                        <h6><i class="fas fa-info-circle"></i> Основная информация</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">ФИО студента *</label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       required placeholder="Иванов Иван Иванович">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       required placeholder="student@example.com">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="business_role_id" class="form-label">Бизнес-роль</label>
+                            <select class="form-select" id="business_role_id" name="business_role_id">
+                                <option value="">Не выбрано</option>
+                                {% for role in business_roles %}
+                                    <option value="{{ role.id }}">{{ role.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Выбор роли улучшит качество рекомендаций</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Навыки -->
+                    <div class="mb-4">
+                        <h6><i class="fas fa-tools"></i> Навыки студента</h6>
+                        <div class="mb-3">
+                            <label for="skills" class="form-label">Список навыков (через запятую)</label>
+                            <textarea class="form-control" id="skills" name="skills" 
+                                      rows="3" 
+                                      placeholder="Python, SQL, JavaScript, Git, Docker..."></textarea>
+                            <div class="form-text">
+                                Укажите навыки через запятую. Существующие навыки будут связаны автоматически.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Популярные навыки (кликните для добавления)</label>
+                            <div id="popularSkills">
+                                {% for skill in skills %}
+                                    <span class="badge bg-secondary skill-select" 
+                                          data-skill="{{ skill.name }}"
+                                          style="cursor: pointer; margin: 2px;">
+                                        {{ skill.name }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Уровни владения -->
+                    <div class="mb-4" id="skillLevelsSection" style="display: none;">
+                        <h6><i class="fas fa-star"></i> Уровни владения навыками</h6>
+                        <div id="skillLevels">
+                            <!-- Уровни будут добавляться динамически -->
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопки -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="reset" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-undo"></i> Очистить
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Сохранить студента
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Быстрые шаблоны -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-magic"></i> Быстрые шаблоны</h5>
+            </div>
+            <div class="card-body">
+                <p>Добавить тестового студента:</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="fillTemplate('frontend')">
+                        <i class="fab fa-js"></i> Frontend Developer
+                    </button>
+                    <button class="btn btn-outline-success" onclick="fillTemplate('backend')">
+                        <i class="fas fa-server"></i> Backend Developer
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="fillTemplate('analyst')">
+                        <i class="fas fa-chart-bar"></i> Data Analyst
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="fillTemplate('qa')">
+                        <i class="fas fa-bug"></i> QA Engineer
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Информация о рекомендациях -->
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Как это работает?</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>После добавления студента:</strong></p>
+                <ol class="small">
+                    <li>Система автоматически проанализирует его навыки</li>
+                    <li>Сравнит с требованиями вакансий в базе</li>
+                    <li>Рассчитает релевантность каждой вакансии</li>
+                    <li>Предоставит персонализированные рекомендации</li>
+                </ol>
+                
+                <hr>
+                
+                <p><strong>Что улучшает рекомендации:</strong></p>
+                <ul class="small">
+                    <li>Точное указание бизнес-роли</li>
+                    <li>Полный список актуальных навыков</li>
+                    <li>Регулярное обновление базы вакансий</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Список существующих студентов -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-users"></i> Существующие студенты</h5>
+            </div>
+            <div class="card-body">
+                <p>Вы можете редактировать профили существующих студентов или посмотреть их рекомендации.</p>
+                <a href="{{ url_for('students') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-list"></i> Перейти к списку студентов
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Обработка выбора популярных навыков
+    $('.skill-select').click(function() {
+        const skill = $(this).data('skill');
+        const skillsTextarea = $('#skills');
+        const currentSkills = skillsTextarea.val();
+        
+        if (currentSkills) {
+            if (!currentSkills.includes(skill)) {
+                skillsTextarea.val(currentSkills + ', ' + skill);
+            }
+        } else {
+            skillsTextarea.val(skill);
+        }
+        
+        updateSkillLevels();
+    });
+    
+    // Обновление уровней владения навыками
+    $('#skills').on('input', function() {
+        updateSkillLevels();
+    });
+    
+    function updateSkillLevels() {
+        const skillsText = $('#skills').val();
+        if (!skillsText.trim()) {
+            $('#skillLevelsSection').hide();
+            return;
+        }
+        
+        const skills = skillsText.split(',').map(s => s.trim()).filter(s => s);
+        let levelsHtml = '';
+        
+        skills.forEach(function(skill, index) {
+            levelsHtml += `
+                <div class="row mb-2">
+                    <div class="col-6">
+                        <label class="form-label">${skill}</label>
+                    </div>
+                    <div class="col-6">
+                        <select class="form-select form-select-sm skill-level" data-skill="${skill}">
+                            <option value="1">1 ★ (Новичок)</option>
+                            <option value="2">2 ★★ (Базовый)</option>
+                            <option value="3" selected>3 ★★★ (Средний)</option>
+                            <option value="4">4 ★★★★ (Продвинутый)</option>
+                            <option value="5">5 ★★★★★ (Эксперт)</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        });
+        
+        $('#skillLevels').html(levelsHtml);
+        $('#skillLevelsSection').show();
+    }
+    
+    // Шаблоны студентов
+    window.fillTemplate = function(template) {
+        let name, email, role, skills;
+        
+        switch(template) {
+            case 'frontend':
+                name = 'Петров Алексей';
+                email = 'petrov.alexey@example.com';
+                role = '2'; // Frontend Developer
+                skills = 'JavaScript, HTML/CSS, React, TypeScript, Git, Webpack';
+                break;
+            case 'backend':
+                name = 'Сидорова Мария';
+                email = 'sidorova.maria@example.com';
+                role = '3'; // Backend Developer
+                skills = 'Python, Django, PostgreSQL, Docker, Git, REST API';
+                break;
+            case 'analyst':
+                name = 'Козлов Дмитрий';
+                email = 'kozlov.dmitry@example.com';
+                role = '1'; // Data Analyst
+                skills = 'Python, SQL, Excel, Power BI, Statistics, Git';
+                break;
+            case 'qa':
+                name = 'Волкова Анна';
+                email = 'volkova.anna@example.com';
+                role = '6'; // QA Engineer
+                skills = 'Testing, Automation, Python, Selenium, JIRA, Git';
+                break;
+        }
+        
+        $('#name').val(name);
+        $('#email').val(email);
+        $('#business_role_id').val(role);
+        $('#skills').val(skills);
+        
+        updateSkillLevels();
+        
+        // Устанавливаем уровни для шаблонных навыков
+        setTimeout(function() {
+            $('.skill-level').each(function() {
+                $(this).val('3'); // Средний уровень по умолчанию
+            });
+        }, 100);
+    };
+    
+    // Валидация формы
+    $('form').submit(function(e) {
+        const name = $('#name').val().trim();
+        const email = $('#email').val().trim();
+        
+        if (!name || !email) {
+            alert('Пожалуйста, заполните обязательные поля (ФИО и Email)');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!validateEmail(email)) {
+            alert('Пожалуйста, введите корректный email адрес');
+            e.preventDefault();
+            return false;
+        }
+        
+        return true;
+    });
+    
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+});
+</script>
+{% endblock %}
