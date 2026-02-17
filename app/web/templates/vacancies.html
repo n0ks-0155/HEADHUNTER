@@ -1,0 +1,96 @@
+<!-- app/web/templates/vacancies.html -->
+{% extends "base.html" %}
+
+{% block title %}Вакансии - Мониторинг вакансий{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1><i class="fas fa-briefcase"></i> Вакансии</h1>
+        <p class="lead">Список актуальных вакансий с HeadHunter</p>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle"></i> Ошибка при загрузке данных: {{ error }}
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list"></i> Все вакансии (последние 100)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if vacancies %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Название</th>
+                                    <th>Компания</th>
+                                    <th>Регион</th>
+                                    <th>Бизнес-роль</th>
+                                    <th>Зарплата</th>
+                                    <th>Опыт</th>
+                                    <th>Дата публикации</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vacancy, company_name, region_name, business_role_name in vacancies %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ vacancy.title }}</strong>
+                                    </td>
+                                    <td>{{ company_name }}</td>
+                                    <td>{{ region_name }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ business_role_name }}</span>
+                                    </td>
+                                    <td>
+                                        {% if vacancy.salary_from or vacancy.salary_to %}
+                                            {% if vacancy.salary_from and vacancy.salary_to %}
+                                                {{ vacancy.salary_from|int }} - {{ vacancy.salary_to|int }} {{ vacancy.currency }}
+                                            {% elif vacancy.salary_from %}
+                                                от {{ vacancy.salary_from|int }} {{ vacancy.currency }}
+                                            {% elif vacancy.salary_to %}
+                                                до {{ vacancy.salary_to|int }} {{ vacancy.currency }}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">не указана</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ vacancy.experience or 'Не указан' }}</td>
+                                    <td>
+                                        {% if vacancy.published_at %}
+                                            {{ vacancy.published_at.strftime('%d.%m.%Y') }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ vacancy.url }}" target="_blank" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-external-link-alt"></i> Открыть
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> В базе данных нет вакансий.
+                        <a href="{{ url_for('parser_page') }}" class="alert-link">Запустить парсер</a> для загрузки.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
