@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Мониторинг вакансий{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4"><i class="fas fa-chart-line text-primary"></i> Система мониторинга вакансий</h1>
+            <p class="lead">Веб-инструмент для мониторинга вакансий HeadHunter в разрезе бизнес-ролей колледжа IThub</p>
+            <hr class="my-4">
+            <p>Система позволяет отслеживать вакансии по IT-специальностям, анализировать требования и рекомендовать вакансии студентам на основе их навыков.</p>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('dashboard') }}" role="button">
+                <i class="fas fa-dashboard"></i> Перейти к дашборду
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card stat-card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="card-title display-6" id="vacanciesCount">0</h2>
+                        <p class="card-text">Вакансий в базе</p>
+                    </div>
+                    <i class="fas fa-briefcase fa-3x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card stat-card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="card-title display-6" id="studentsCount">0</h2>
+                        <p class="card-text">Студентов в системе</p>
+                    </div>
+                    <i class="fas fa-users fa-3x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card stat-card text-white bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="card-title display-6" id="companiesCount">0</h2>
+                        <p class="card-text">Компаний</p>
+                    </div>
+                    <i class="fas fa-building fa-3x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="fas fa-cogs"></i> Основные возможности</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Мониторинг вакансий с HeadHunter
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Анализ по бизнес-ролям колледжа
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Персональные рекомендации для студентов
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Визуализация статистики и трендов
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Учет навыков и опыта студентов
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5><i class="fas fa-rocket"></i> Быстрые действия</h5>
+            </div>
+            <div class="card-body text-center">
+                <a href="{{ url_for('parser_page') }}" class="btn btn-primary btn-lg mb-3 w-100">
+                    <i class="fas fa-download"></i> Обновить вакансии
+                </a>
+                <a href="{{ url_for('add_student') }}" class="btn btn-success btn-lg mb-3 w-100">
+                    <i class="fas fa-user-plus"></i> Добавить студента
+                </a>
+                <a href="{{ url_for('students') }}" class="btn btn-info btn-lg w-100">
+                    <i class="fas fa-search"></i> Посмотреть рекомендации
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Загружаем начальную статистику
+    $.get('/api/statistics', function(data) {
+        if (data && !data.error) {
+            $('#vacanciesCount').text(data.total_vacancies || 0);
+            $('#companiesCount').text(data.total_companies || 0);
+        }
+    });
+    
+    // Загружаем количество студентов
+    $.get('/api/student_count', function(data) {
+        if (data && !data.error) {
+            $('#studentsCount').text(data.count || 0);
+        }
+    }).fail(function() {
+        // Если API нет, делаем примерный запрос
+        $.get('/students', function(html) {
+            // Парсим примерное количество
+            $('#studentsCount').text('10+');
+        });
+    });
+});
+</script>
+{% endblock %}
